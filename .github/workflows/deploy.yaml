@@ -1,5 +1,10 @@
 name: Deploy multiple containers
 
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   build:
     runs-on: ubuntu-latest
