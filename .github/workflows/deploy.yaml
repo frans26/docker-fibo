@@ -9,13 +9,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - uses: actions/checkout@v3
-      - run: |
-          docker build -t frans/docker-react -f Dockerfile.dev .
-          docker run -e CI=true frans/docker-react npm run test -- --coverage
+      - name: Test client app
+        run: |
+          docker build -t frans/fibo-test -f ./client/Dockerfile.dev ./client
+          docker run -e CI=true frans/fibo-test npm run test -- --coverage
+
+      - name: Build docker images
+        run: |
+          docker build -t frans/fibo-client ./client
+          docker build -t frans/fibo-nginx ./nginx
+          docker build -t frans/fibo-server ./server
+          docker build -t frans/fibo-worker ./worker
+
+      - name: Push images to docker hub
+        run: |
+          docker push frans/fibo-client
+          docker push frans/fibo-nginx
+          docker push frans/fibo-server
+          docker push frans/fibo-worker
