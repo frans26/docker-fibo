@@ -9,34 +9,48 @@ jobs:
   test_client_app:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Test client app
         run: |
           docker build -t frans/fibo-test -f ./client/Dockerfile.dev ./client
           docker run -e CI=true frans/fibo-test npm run test -- --coverage
-  build:
+  client_build_push:
     runs-on: ubuntu-latest
     needs: [test_client_app]
     steps:
-      - uses: actions/checkout@v3
-
-      # - name: Login to Docker Hub
-      #   uses: docker/login-action@v2
-      #   with:
-      #     username: ${{ secrets.DOCKER_USERNAME }}
-      #     password: ${{ secrets.DOCKER_TOKEN }}
-
-      - name: Build docker images
-        run: |
-          docker build -t frans/fibo-client ./client
-          docker build -t frans/fibo-nginx ./nginx
-          docker build -t frans/fibo-server ./server
-          docker build -t frans/fibo-worker ./worker
-
-      # - name: Push images to docker hub
-      #   run: |
-      #     docker push frans/fibo-client
-      #     docker push frans/fibo-nginx
-      #     docker push frans/fibo-server
-      #     docker push frans/fibo-worker
+        - name: Checkout
+          uses: actions/checkout@v3
+        - name: Set up QEMU
+          uses: docker/setup-qemu-action@v2
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v2
+        - name: Login to Docker Hub
+          uses: docker/login-action@v2
+          with:
+            username: ${{ secrets.DOCKER_USERNAME }}
+            password: ${{ secrets.DOCKER_TOKEN }}
+        - name: Build and push client
+          uses: docker/build-push-action@v4
+          with:
+            context: ./client
+            push: true
+            tags: frans/fibo-client:latest
+        - name: Build and push nginx
+          uses: docker/build-push-action@v4
+          with:
+            context: ./nginx
+            push: true
+            tags: frans/fibo-nginx:latest
+        - name: Build and push server
+          uses: docker/build-push-action@v4
+          with:
+            context: ./server
+            push: true
+            tags: frans/fibo-server:latest
+        - name: Build and push worker
+          uses: docker/build-push-action@v4
+          with:
+            context: ./worker
+            push: true
+            tags: frans/fibo-worker:latest
