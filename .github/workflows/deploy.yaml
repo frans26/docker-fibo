@@ -54,3 +54,16 @@ jobs:
             context: ./worker
             push: true
             tags: frans26/fibo-worker:latest
+        - name: Generate deployment package
+          run: zip -r deploy.zip . -x '*.git*'
+        - name: Deploy to EB
+          uses: einaregilsson/beanstalk-deploy@v21
+          with:
+            aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+            aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+            application_name: fibo-docker
+            environment_name: Fibodocker-env
+            existing_bucket_name: elasticbeanstalk-ap-southeast-1-594092054201
+            region: ap-southeast-1
+            version_label: ${{ github.sha }}
+            deployment_package: deploy.zip
